@@ -12,12 +12,18 @@ Resources:
     Properties:
       BucketName: !Sub "udapeople-${ID}"
       AccessControl: PublicRead
-      WebsiteConfiguration:
-        IndexDocument: index.html
-        ErrorDocument: 404.html
+      ObjectLockConfiguration:
+        ObjectLockEnabled: Enabled
+        Rule:
+          DefaultRetention:
+            Mode: GOVERNANCE
+            Years: 5
       BucketOwnershipControls:
         Rules:
           - ObjectOwnership: BucketOwnerPreferred
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: 404.html
   
   WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
