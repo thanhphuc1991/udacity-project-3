@@ -176,12 +176,12 @@ jobs:
                --filters "Name=tag:Name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
                --query 'Reservations[*].Instances[*].PublicIpAddress' \
                --output text)
-            echo $BACKEND_PUBLIC_IP >> .circleci/ansible/inventory.txt
-            cat .circleci/ansible/inventory.txt
+            echo $BACKEND_PUBLIC_IP >> .circleci/ansible/inventory.ini
+            cat .circleci/ansible/inventory.ini
       - persist_to_workspace:
           root: ~/
           paths:
-            - project/.circleci/ansible/inventory.txt
+            - project/.circleci/ansible/inventory.ini
       - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID:0:7}     
 
@@ -204,8 +204,8 @@ jobs:
           name: Configure server
           working_directory: ./.circleci/ansible
           command: |
-            cat inventory.txt 
-            ansible-playbook -i inventory.txt configure-server.yml -vv
+            cat inventory.ini 
+            ansible-playbook -i inventory.ini configure-server.yml -vv
       - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID:0:7}      
 
@@ -303,14 +303,14 @@ jobs:
                --filters "Name=tag:Name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
                --query 'Reservations[*].Instances[*].PublicIpAddress' \
                --output text)
-            echo $BACKEND_PUBLIC_IP >> .circleci/ansible/inventory.txt
-            cat .circleci/ansible/inventory.txt
+            echo $BACKEND_PUBLIC_IP >> .circleci/ansible/inventory.ini
+            cat .circleci/ansible/inventory.ini
             cd backend
             npm install
             npm run build
             cd ..
             export ANSIBLE_HOST_KEY_CHECKING=False
-            ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml -vvv
+            ansible-playbook -i .circleci/ansible/inventory.ini .circleci/ansible/deploy-backend.yml -vvv
   smoke-test:
     docker:
       - image: python:3.7-alpine3.11
