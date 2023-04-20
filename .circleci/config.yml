@@ -200,7 +200,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-          - "8c:b1:2a:6f:8f:ea:41:b8:d4:c1:60:4e:2c:34:d3:79:c0:d1:bf:c4"
+          - "18:24:de:61:c5:d6:f0:25:71:fb:5c:4c:b8:a5:a6:56:d9:01:e9:29"
       - run:
           name: Install dependencies
           command: |
@@ -256,7 +256,7 @@ jobs:
           command: |
             cd frontend
             BACKEND_PUBLIC_IP=$(aws ec2 describe-instances \
-               --filters "Name=tag:Name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+               --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
                --query 'Reservations[*].Instances[*].PublicIpAddress' \
                --output text)
             curl -d "http://${BACKEND_PUBLIC_IP}:3030" https://kvdb.io/${KVDB_BUCKET}/backendurl
@@ -290,7 +290,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-          - "8c:b1:2a:6f:8f:ea:41:b8:d4:c1:60:4e:2c:34:d3:79:c0:d1:bf:c4"
+          - "18:24:de:61:c5:d6:f0:25:71:fb:5c:4c:b8:a5:a6:56:d9:01:e9:29"
       - attach_workspace:
           at: ./
       - restore_cache:
@@ -308,7 +308,7 @@ jobs:
           working_directory: ./
           command: |
             BACKEND_PUBLIC_IP=$(aws ec2 describe-instances \
-               --filters "Name=tag:Name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+               --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
                --query 'Reservations[*].Instances[*].PublicIpAddress' \
                --output text)
             echo $BACKEND_PUBLIC_IP >> .circleci/ansible/inventory.ini
