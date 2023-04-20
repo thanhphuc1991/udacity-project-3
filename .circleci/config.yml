@@ -16,14 +16,14 @@ commands:
           when: on_fail
           command: |
             echo "Deleting Cloud Formation Frontend Stack"
-            aws s3 rm s3://udapeople-<< parameters.id >> --recursive
-            aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.id >> --output text
+            # aws s3 rm s3://udapeople-<< parameters.id >> --recursive
+            # aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.id >> --output text
       - run:
           name: Destroy Cloud Formation Backend Stacks and infrastructure
           when: on_fail
           command: |
             echo "Deleting Cloud Formation Backend Stack"
-            aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.id >> --output text
+            # aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.id >> --output text
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
