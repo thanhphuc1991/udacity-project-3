@@ -16,14 +16,14 @@ commands:
           when: on_fail
           command: |
             echo "Deleting Cloud Formation Frontend Stack"
-            # aws s3 rm s3://udapeople-<< parameters.id >> --recursive
-            # aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.id >> --output text
+            aws s3 rm s3://udapeople-<< parameters.id >> --recursive
+            aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.id >> --output text
       - run:
           name: Destroy Cloud Formation Backend Stacks and infrastructure
           when: on_fail
           command: |
             echo "Deleting Cloud Formation Backend Stack"
-            # aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.id >> --output text
+            aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.id >> --output text
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
@@ -200,7 +200,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-          - "18:24:de:61:c5:d6:f0:25:71:fb:5c:4c:b8:a5:a6:56:d9:01:e9:29"
+          - "52:f7:1f:4c:1b:53:bc:13:83:05:d7:63:1e:43:e1:d5"
       - run:
           name: Install dependencies
           command: |
@@ -290,7 +290,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-          - "18:24:de:61:c5:d6:f0:25:71:fb:5c:4c:b8:a5:a6:56:d9:01:e9:29"
+          - "52:f7:1f:4c:1b:53:bc:13:83:05:d7:63:1e:43:e1:d5"
       - attach_workspace:
           at: ./
       - restore_cache:
