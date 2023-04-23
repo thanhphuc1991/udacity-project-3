@@ -37,7 +37,7 @@ commands:
           when: on_fail
           command: |
             # Example: kvdb.io
-            SUCCESS=$(curl  https://kvdb.io/FWfT3EJvSc3D57Yhp76CdN/migration_<< parameters.id >>)
+            SUCCESS=$(curl --insecure https://kvdb.io/FWfT3EJvSc3D57Yhp76CdN/migration_<< parameters.id >>)
             # Logic for reverting the database state
             if (( $SUCCESS == 1 ));
             then
@@ -145,6 +145,7 @@ jobs:
       - slack/notify:
           event: fail
           template: basic_fail_1
+
   scan-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -159,6 +160,7 @@ jobs:
             # npm install
             # npm install oauth-sign@^0.9.0
             # npm audit --audit-level=critical
+
   deploy-infrastructure:
     docker:
       - image: amazon/aws-cli
@@ -209,11 +211,29 @@ jobs:
       - attach_workspace:
           at: ~/
       - run:
+          name: Configure variable
+          command: |
+            echo ENVIRONMENT=production > backend/.env
+            echo TYPEORM_CONNECTION=$TYPEORM_CONNECTION >> backend/.env
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> backend/.env
+            echo TYPEORM_ENTITIES=$TYPEORM_ENTITIES >> backend/.env
+            echo TYPEORM_HOST=$TYPEORM_HOST >> backend/.env
+            echo TYPEORM_MIGRATIONS=$TYPEORM_MIGRATIONS >> backend/.env
+            echo TYPEORM_MIGRATIONS_DIR=$TYPEORM_MIGRATIONS_DIR >> backend/.env
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> backend/.env
+            echo TYPEORM_PORT=$TYPEORM_PORT >> backend/.env
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> backend/.env
+            cat backend/.env
+      - run:
           name: Configure server
           working_directory: ./.circleci/ansible
           command: |
             cat inventory.ini
             ansible-playbook -i inventory.ini configure-server.yml -vv
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/backend
       - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID:0:7}
 
@@ -223,6 +243,15 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install dependencies
+          command: |
+            sudo apt install -y tar gzip curl
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip -qq awscliv2.zip
+            sudo ./aws/install
+      - restore_cache:
+          keys: [backend-build]
+      - run:
           name: Run migrations
           command: |
             cd backend
@@ -230,12 +259,12 @@ jobs:
             # Run and save the migration output
             npm run migrations > migrations_dump.txt
       - run:
-          name: Send migration results to memstash
+          name: Send migration results to Kvdb
           command: |
-            if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
+            if grep -q "success" ~/project/backend/migrations_dump.txt
             then
               # If you are using kvdb.io, generate the bucket ID "FWfT3EJvSc3D57Yhp76CdN" in your local terminal first
-              curl https://kvdb.io/FWfT3EJvSc3D57Yhp76CdN/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
+              curl --insecure https://kvdb.io/FWfT3EJvSc3D57Yhp76CdN/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
             fi
       - destroy-environment:
           id: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -251,25 +280,29 @@ jobs:
           command: |
               cd frontend
               npm install
+      - restore_cache:
+          keys: [frontend-build]
       - run:
           name: Get backend URL
           command: |
             cd frontend
-            BACKEND_PUBLIC_IP=$(aws ec2 describe-instances \
+            export BACKEND_PUBLIC_IP=$(aws ec2 describe-instances \
                --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
                --query 'Reservations[*].Instances[*].PublicIpAddress' \
                --output text)
-            curl -d "http://${BACKEND_PUBLIC_IP}:3030" https://kvdb.io/${KVDB_BUCKET}/backendurl=${BACKEND_PUBLIC_IP}
+            export API_URL="http://${BACKEND_PUBLIC_IP}:3030"
+            echo "API_URL = ${API_URL}"
             echo "API_URL=http://${BACKEND_PUBLIC_IP}:3030" >> .env
             echo "NODE_ENV=production" >> .env
             cat .env
-            curl -d https://kvdb.io/${KVDB_BUCKET}/backendurl
       - run:
           name: Deploy frontend artifact
           command: |
             cd frontend
+            npm install
             npm run build
             cp .env dist
+            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive --acl bucket-owner-full-control
 
   deploy-backend:
