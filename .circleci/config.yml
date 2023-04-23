@@ -187,6 +187,7 @@ jobs:
                --query 'Reservations[*].Instances[*].PublicIpAddress' \
                --output text)
             echo $BACKEND_PUBLIC_IP >> .circleci/ansible/inventory.ini
+            curl --insecure https://kvdb.io/FWfT3EJvSc3D57Yhp76CdN/backendurl -d $(echo $BACKEND_PUBLIC_IP)
             cat .circleci/ansible/inventory.ini
       - persist_to_workspace:
           root: ~/
@@ -352,6 +353,7 @@ jobs:
             cd ..
             export ANSIBLE_HOST_KEY_CHECKING=False
             ansible-playbook -i .circleci/ansible/inventory.ini .circleci/ansible/deploy-backend.yml -vvv
+
   smoke-test:
     docker:
       - image: python:3.7-alpine3.11
@@ -367,14 +369,13 @@ jobs:
           command: |
             ls
             pwd
-            export backend_url=$(curl -H "token: ecdfc255-81e1-4056-9efa-2d7fa10812e1" \
-            --request GET https://api.memstash.io/values/backend_url)
-            echo $backend_url
-            # curl "$backend_url/api/status"
+            export BACKEND_URL=$(curl --insecure https://kvdb.io/FWfT3EJvSc3D57Yhp76CdN/backendurl)
+            echo $BACKEND_URL
+            curl "$BACKEND_URL/api/status"
       - run:
           name: Frontend smoke test.
           command: |
-            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com"
+            URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-east-1.amazonaws.com1"
             if curl -s ${URL} | grep "Welcome"
             then
               return 0
@@ -460,7 +461,7 @@ jobs:
           command: |
             cd .circleci/ansible
             cat inventory.txt
-            ansible-playbook -i inventory.txt node-exporter.yml
+            ansible-playbook -i inventory.ini node-exporter.yml
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations:
