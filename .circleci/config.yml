@@ -35,14 +35,14 @@ commands:
           name: Revert migrations
           # Add when this will run
           when: on_fail
+          working_directory: ./backend
           command: |
-            # Example: kvdb.io
             SUCCESS=$(curl --insecure https://kvdb.io/FWfT3EJvSc3D57Yhp76CdN/migration_<< parameters.id >>)
-            # Logic for reverting the database state
+            echo $SUCCESS
             if (( $SUCCESS == 1 ));
             then
-              cd ~/project/backend
-              npm install
+              pwd
+              ls -la
               npm run migration:revert
             fi
   install_awscli:
@@ -244,7 +244,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install dependencies
+          name: Install libs
           command: |
             sudo apt install -y tar gzip curl
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -391,7 +391,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Get old workflow to update
+          name: Get Old Workflow to update/cleanup
           command: |
             export OldWorkflowID=$(aws cloudformation \
             list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
@@ -449,16 +449,16 @@ jobs:
           fingerprints:
             - "66:1a:1c:98:8e:bf:f8:80:a9:0f:59:06:b1:70:cf:3c"
       - run:
-          name: Install dependencies
+          name: Install libs
           command: |
             apk add --update aws-cli tar gzip ansible nodejs npm
       - attach_workspace:
           at: ~/
       - run:
-          name: Setup Prometheus Node Exporter
+          name: Install Prometheus Node Exporter
           command: |
             cd .circleci/ansible
-            cat inventory.txt
+            cat inventory.ini
             ansible-playbook -i inventory.ini node-exporter.yml
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -482,9 +482,11 @@ workflows:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
           filters:
             branches:
-              only: [master]
-      - configure-infrastructure:
+              only: [dev-branch]
+      - add-prometheus-node-exporter:
           requires: [deploy-infrastructure]
+      - configure-infrastructure:
+          requires: [add-prometheus-node-exporter]
       - run-migrations:
           requires: [configure-infrastructure]
       - deploy-frontend:
@@ -496,4 +498,4 @@ workflows:
       - cloudfront-update:
           requires: [smoke-test]
       - cleanup:
-          requires: [cloudfront-update]
+          requires: [cloudfront-update, add-prometheus-node-exporter]
