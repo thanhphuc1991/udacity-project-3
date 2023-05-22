@@ -369,7 +369,7 @@ jobs:
           command: |
             export BACKEND_URL=$(curl --insecure https://kvdb.io/FWfT3EJvSc3D57Yhp76CdN/backendurl)
             echo $BACKEND_URL
-            # curl "$BACKEND_URL/api/status"
+            curl "$BACKEND_URL/api/status"
       - run:
           name: Frontend smoke test.
           command: |
@@ -498,4 +498,5 @@ workflows:
       - cloudfront-update:
           requires: [smoke-test]
       - cleanup:
-          requires: [cloudfront-update, add-prometheus-node-exporter]
+          # requires: [cloudfront-update, add-prometheus-node-exporter]
+          requires: [cloudfront-update]
