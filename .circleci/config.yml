@@ -370,8 +370,8 @@ jobs:
           command: |
             export BACKEND_URL=$(curl --insecure https://kvdb.io/FWfT3EJvSc3D57Yhp76CdN/backendurl)
             echo $BACKEND_URL
-            curl "$BACKEND_URL:3030/api/statusz"
-            if curl "$BACKEND_URL:3030/api/statusz" | grep "ok"
+            curl "$BACKEND_URL:3030/api/status"
+            if curl "$BACKEND_URL:3030/api/status" | grep "ok"
             then
               return 0
             else
