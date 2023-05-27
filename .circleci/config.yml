@@ -405,6 +405,7 @@ jobs:
             list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
             --no-paginate --output text)
             echo $OldWorkflowID
+            curl --insecure https://kvdb.io/FWfT3EJvSc3D57Yhp76CdN/OldWorkflowID -d ${OldWorkflowID}
       - run:
           name: Update Cloud Front distribution
           command: |
@@ -427,26 +428,24 @@ jobs:
           name: Remove old stacks and files
           command: |
             # Fetch the Old workflow ID
-            export OldWorkflowID=$(aws cloudformation list-exports --query "Exports[?Name==\`WorkflowID\`].Value" --no-paginate --output text)
+            export OldWorkflowID=$(curl --insecure https://kvdb.io/FWfT3EJvSc3D57Yhp76CdN/OldWorkflowID)
             echo OldWorkflowID: "${OldWorkflowID}"
             echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
             # Fetch the stack names
-            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
-                      --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
-            echo Stack names: "${STACKS[@]}"
+            # export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+            #           --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
+            # echo Stack names: "${STACKS[@]}"
             CurrentWorkflowID=${CIRCLE_WORKFLOW_ID:0:7}
+            echo CurrentWorkflowID: "${CurrentWorkflowID}"
 
-            if [[ $OldWorkflowID == "" ]]
-            then
-            echo "No workflow id found"
-            else
             if [[ "$CurrentWorkflowID" != "$OldWorkflowID" ]]
             then
               echo "$OldWorkflowID!=$CurrentWorkflowID => will delete old version"
-              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
-              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
-              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
-            fi
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive --output text
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}" --output text
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}" --output text
+            else
+              echo "$OldWorkflowID==$CurrentWorkflowID => nothing needs to be done..."
             fi
 
   add-prometheus-node-exporter:
