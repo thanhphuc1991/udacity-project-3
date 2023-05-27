@@ -38,10 +38,8 @@ commands:
           working_directory: ./backend
           when: on_fail
           command: |
-            # Example: kvdb.io
             SUCCESS=$(curl --insecure https://kvdb.io/FWfT3EJvSc3D57Yhp76CdN/migration_<< parameters.id >>)
-            # Logic for reverting the database state
-            if (( $SUCCESS == 1 ));
+            if [[ "$SUCCESS" == "1" ]]
             then
               pwd
               ls -la
