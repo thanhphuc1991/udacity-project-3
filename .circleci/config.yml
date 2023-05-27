@@ -369,7 +369,7 @@ jobs:
           command: |
             export BACKEND_URL=$(curl --insecure https://kvdb.io/FWfT3EJvSc3D57Yhp76CdN/backendurl)
             echo $BACKEND_URL
-            # curl "$BACKEND_URL/api/status"
+            curl "$BACKEND_URL:3030/api/statusz"
       - run:
           name: Frontend smoke test.
           command: |
